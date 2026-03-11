@@ -10,21 +10,12 @@ data = df.select_dtypes(include=['number']).values
 
 print(data)
 
+def train_and_load_model():
+    x_train_normal, x_test_normal, = train_test_split(data, test_size=0.2, random_state=42)
 
-if __name__ == "__main__":
-    contamination = 0.1
-
-    x_train, x_test, = train_test_split(data, test_size=0.2, random_state=42)
-
-    clf_name = 'AutoEncoder'
-    clf_name = AutoEncoder(epoch_num=30, contamination=contamination)
-    clf.fit(x_train)
-
-    y_train_pred = clf.labels_
-    y_train_scores = clf.decision_scores
-
-    y_test_pred = clf.predict(x_test)
-    y_test_scores = clf.decision_function(x_test)
-
-    print(f"Training: {sum(y_train_pred)} anomalies out of {len(y_train_pred)}")
-    print(f"Test (normal): {sum(y_test_pred)} anomalies out of {len(y_test_pred)}")
+    # AutoEncoder - learns to reconstruct normal behaviour
+    ae = AutoEncoder(epoch_num=50, contamination=0.02)
+    ae.fit(x_train_normal)
+    scores_ae = ae.decision_function(x_test_normal)
+    print(scores_ae)
+    return ae, scores_ae # Return both the models and test scores
