@@ -46,8 +46,31 @@ def generate_anomalous_users(n_users=50, days=90):
     
     for user_id in range(501, 501 + n_users):
         # Pick an anomaly type for this user
-        anomaly_type = np.random.choice(['high_stakes', 'chasing_losses', 'unusual_hours', 'rapid_deposits', 'multiple_devices'])
+        anomaly_type = np.random.choice(['extreme_high_stakes', 'aggressive_chasing', 'suspicious_hours', 'device_hopping', 'bot_like'])
         
+        # Create extreme anomaly profiles
+        if anomaly_type == 'extreme_high_stakes':
+            # MASSIVE stakes - 10-50x normal
+            base_multiplier = np.random.uniform(10, 50)
+            stake_variance = 0.5  # More volatile
+            
+        elif anomaly_type == 'aggressive_chasing':
+            # Extreme gambling addiction patterns
+            base_multiplier = np.random.uniform(5, 20)
+            chase_frequency = np.random.choice([3, 4, 5])  # Chase 3-5 days straight
+            
+        elif anomaly_type == 'suspicious_hours':
+            # Only active during graveyard hours
+            suspicious_hours = [0, 1, 2, 3, 4, 5, 22, 23]  # Midnight-5am, 10pm-midnight
+            
+        elif anomaly_type == 'device_hopping':
+            # Constant device switching
+            device_switch_prob = 0.8  # 80% chance of new device each day
+            
+        else:  # bot_like
+            # Robot-like perfect patterns
+            perfect_timing = True
+            
         for day in range(days):
             date = datetime(2025, 1, 1) + timedelta(days=day)
             
@@ -57,59 +80,66 @@ def generate_anomalous_users(n_users=50, days=90):
             base_hour = np.random.randint(8, 23)
             base_session = np.random.uniform(10, 60)
             
-            # Apply anomalies
-            if anomaly_type == 'high_stakes':
-                # Progressively increasing stakes
-                daily_stake = base_stake * (2 + day * 0.02) * np.random.normal(1, 0.2)
-                num_bets = base_bets * 1.5
-                days_since_deposit = max(0, day - (day // 20) * 20)
-                new_device = 0
-                foreign_ip = int(np.random.random() < 0.05)
+            # Apply EXTREME anomalies
+            if anomaly_type == 'extreme_high_stakes':
+                # Exponentially increasing massive stakes
+                daily_stake = base_stake * base_multiplier * (1 + day * 0.05) * np.random.normal(1, stake_variance)
+                num_bets = int(base_bets * 3)  # Triple the bets
+                days_since_deposit = max(0, day % 7)  # Weekly deposits
+                new_device = int(np.random.random() < 0.3)  # Some device switching
+                foreign_ip = int(np.random.random() < 0.4)  # High foreign IP usage
+                session_duration_mins = base_session * 2.5  # Much longer sessions
                 
-            elif anomaly_type == 'chasing_losses':
-                # High activity on certain days (chasing pattern)
-                if day % 7 < 3:  # Few days a week
-                    daily_stake = base_stake * 3 * np.random.normal(1, 0.3)
-                    num_bets = int(base_bets * 2.5)
+            elif anomaly_type == 'aggressive_chasing':
+                # Extreme addiction patterns
+                if day % 7 < chase_frequency:  # Chase several days straight
+                    daily_stake = base_stake * base_multiplier * np.random.normal(1, 0.8)
+                    num_bets = int(base_bets * 5)  # 5x normal bets
+                    session_duration_mins = base_session * 3  # Marathon sessions
                 else:
-                    daily_stake = 0
+                    daily_stake = 0  # Complete shutdown
                     num_bets = 0
-                days_since_deposit = max(0, day - (day // 15) * 15)
-                new_device = 0
+                    session_duration_mins = 0
+                days_since_deposit = max(0, day % 3)  # Desperate deposits every 3 days
+                new_device = int(np.random.random() < 0.2)
                 foreign_ip = 0
+                login_hour = int(np.clip(np.random.normal(12, 8), 0, 23))  # Random hours
                 
-            elif anomaly_type == 'unusual_hours':
-                # Betting at odd hours
-                login_hour = int(np.clip(np.random.normal(2, 3), 0, 23))
-                daily_stake = base_stake * np.random.normal(1, 0.2)
-                num_bets = base_bets
-                session_duration_mins = base_session * 1.5
-                days_since_deposit = max(0, day - (day // 20) * 20)
-                new_device = int(np.random.random() < 0.1)
-                foreign_ip = int(np.random.random() < 0.15)
+            elif anomaly_type == 'suspicious_hours':
+                # Only graveyard hours
+                login_hour = np.random.choice(suspicious_hours)
+                daily_stake = base_stake * 2 * np.random.normal(1, 0.3)
+                num_bets = base_bets * 1.5
+                session_duration_mins = base_session * 2  # Longer night sessions
+                days_since_deposit = max(0, day % 14)  # Bi-weekly deposits
+                new_device = int(np.random.random() < 0.3)
+                foreign_ip = int(np.random.random() < 0.6)  # High foreign IP
                 
-            elif anomaly_type == 'rapid_deposits':
-                # Many deposits in short timeframe
-                daily_stake = base_stake * np.random.normal(1, 0.2)
+            elif anomaly_type == 'device_hopping':
+                # Constant device switching
+                daily_stake = base_stake * 1.5
                 num_bets = base_bets
-                days_since_deposit = max(0, (day % 3))  # Deposits every 3 days
-                new_device = 0
-                foreign_ip = 0
-                
-            else:  # multiple_devices
-                # Frequent device changes
-                daily_stake = base_stake * 1.3
-                num_bets = base_bets
-                login_hour = int(np.clip(base_hour + np.random.normal(0, 3), 6, 23))
+                login_hour = int(np.clip(base_hour + np.random.normal(0, 4), 0, 23))
                 session_duration_mins = base_session
-                days_since_deposit = max(0, day - (day // 20) * 20)
-                new_device = int(np.random.random() < 0.25)
-                foreign_ip = 0
+                days_since_deposit = max(0, day % 10)
+                new_device = int(np.random.random() < device_switch_prob)  # 80% new device!
+                foreign_ip = int(np.random.random() < 0.2)
+                
+            else:  # bot_like
+                # Perfect robot patterns
+                login_hour = 9 + (day % 12)  # Perfect 9am-9pm rotation
+                daily_stake = base_stake * 1.2  # Slightly elevated
+                num_bets = 10  # Exactly 10 bets every day
+                session_duration_mins = 30  # Exactly 30 minutes
+                days_since_deposit = day % 7  # Perfect weekly schedule
+                new_device = 0  # Never changes device
+                foreign_ip = 0  # Never foreign IP
             
             # Ensure variables are set for all anomaly types
-            if anomaly_type != 'unusual_hours':
-                login_hour = int(np.clip(base_hour + np.random.normal(0, 1.5), 6, 23))
-                session_duration_mins = base_session * np.random.normal(1, 0.2)
+            if anomaly_type not in ['aggressive_chasing', 'suspicious_hours', 'bot_like']:
+                login_hour = int(np.clip(base_hour + np.random.normal(0, 2), 0, 23))
+                if anomaly_type != 'extreme_high_stakes':
+                    session_duration_mins = base_session * np.random.normal(1, 0.3)
             
             data.append({
                 'user_id': user_id,
@@ -117,7 +147,7 @@ def generate_anomalous_users(n_users=50, days=90):
                 'daily_stake': max(0, daily_stake),
                 'num_bets': max(0, int(num_bets)),
                 'login_hour': login_hour,
-                'session_duration_mins': max(5, session_duration_mins),
+                'session_duration_mins': max(0, session_duration_mins),
                 'days_since_deposit': days_since_deposit,
                 'new_device': new_device,
                 'foreign_ip': foreign_ip,
